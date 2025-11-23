@@ -1,5 +1,4 @@
 🌈 EmoMood - Mental Wellness Companion
-https://via.placeholder.com/800x200/4CAF50/white?text=MindWell+-+Your+Mental+Wellness+Companion
 
 A comprehensive mental wellness application built with Gradio that provides emotional support, crisis detection, mood tracking, and therapeutic activities through an intuitive web interface.
 
