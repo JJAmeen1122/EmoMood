@@ -718,16 +718,23 @@ def create_app():
 
 # Function to launch the app
 def launch_app():
-    """Launch the app with standard settings"""
+    """Launch the app with public sharing"""
     print("🚀 Starting MindWell Mental Wellness Website...")
     print("⏳ This may take a few seconds...")
-    print("✅ Crisis detection activated - 'want to kill myself' will trigger immediate help")
-
+    print("🌐 Creating public link...")
+    print("✅ Crisis detection activated")
+    print("🔒 All data stays private and local")
+    
     # Create the app
     demo = create_app()
-
-    # Launch with standard settings
-    demo.launch(server_name="0.0.0.0", server_port=7860, share=False)
+    
+    # Launch with public sharing
+    demo.launch(
+        share=True,  # This creates a public gradio.live link
+        server_name="0.0.0.0",
+        server_port=7860,
+        inbrowser=True  # Optional: opens browser automatically
+    )
 
 # Run the application
 if __name__ == "__main__":
