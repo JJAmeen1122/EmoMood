@@ -1,6 +1,3 @@
-
-# pip install -q gradio pandas plotly
-
 import gradio as gr
 import datetime
 import pandas as pd
@@ -13,16 +10,17 @@ class MentalWellnessWebsite:
     def __init__(self):
         self.mood_history = []
         self.activity_log = []
-        
+
         # Enhanced crisis detection keywords
         self.crisis_keywords = [
             'suicide', 'kill myself', 'end it all', 'want to die', 'harm myself',
-            'ending my life', 'no reason to live', 'better off dead', 'marny ka',
-            'marne ka', 'zindagi khatam', 'jeene ka man nahi', 'suicidal',
+            'ending my life', 'no reason to live', 'better off dead',
             'end my life', 'no point living', 'want to disappear', 'self harm',
-            'cut myself', 'hurt myself', 'give up on life'
+            'cut myself', 'hurt myself', 'give up on life', 'kill myself now',
+            'want to kill', 'thinking about killing', 'kill myself today',
+            'kill myself tonight', 'kill myself forever'
         ]
-        
+
         # Comprehensive emotion database
         self.emotion_data = {
             "anxious": {
@@ -143,23 +141,40 @@ class MentalWellnessWebsite:
 
     def analyze_emotion(self, text: str) -> Dict:
         """Analyze text to detect emotion with enhanced crisis detection"""
-        text_lower = text.lower()
-        
-        # Enhanced crisis detection
-        if any(keyword in text_lower for keyword in self.crisis_keywords):
-            return {"emotion": "crisis", "confidence": 0.95}
-        
-        # Emotion scoring
+        text_lower = text.lower().strip()
+
+        # ENHANCED CRISIS DETECTION - MORE SENSITIVE
+        kill_patterns = [
+            r'kill.*myself',
+            r'want.*to.*kill',
+            r'kill.*me',
+            r'suicide',
+            r'end.*my.*life',
+            r'harm.*myself',
+            r'hurt.*myself'
+        ]
+
+        # Check for exact crisis keywords
+        for keyword in self.crisis_keywords:
+            if keyword in text_lower:
+                return {"emotion": "crisis", "confidence": 0.99}
+
+        # Check for kill-related patterns
+        for pattern in kill_patterns:
+            if re.search(pattern, text_lower, re.IGNORECASE):
+                return {"emotion": "crisis", "confidence": 0.99}
+
+        # Emotion scoring for non-crisis text
         emotion_scores = {}
         for emotion, data in self.emotion_data.items():
             score = 0
-            
+
             # Check for emotion keywords
             if emotion in text_lower:
                 score += 3
             if data['name'].lower() in text_lower:
                 score += 2
-            
+
             # Check for related words
             if emotion == "anxious" and any(w in text_lower for w in ['worry', 'nervous', 'panic', 'scared', 'anxiety']):
                 score += 2
@@ -173,10 +188,10 @@ class MentalWellnessWebsite:
                 score += 2
             elif emotion == "tired" and any(w in text_lower for w in ['exhausted', 'fatigued', 'drained', 'no energy', 'tired']):
                 score += 2
-                
+
             if score > 0:
                 emotion_scores[emotion] = score
-        
+
         if emotion_scores:
             primary_emotion = max(emotion_scores, key=emotion_scores.get)
             return {"emotion": primary_emotion, "confidence": emotion_scores[primary_emotion] / 10.0}
@@ -199,7 +214,7 @@ class MentalWellnessWebsite:
 
     def generate_crisis_response(self) -> str:
         """Generate comprehensive crisis response emphasizing life's value and nature's healing"""
-        
+
         life_affirmations = [
             "🌅 **Your life is a unique, irreplaceable story** that's still being written. The world needs your light, even when you can't see it yourself.",
             "💫 **You matter more than you know**. The pain you feel right now is real, but it is not permanent. Brighter days will come.",
@@ -207,7 +222,7 @@ class MentalWellnessWebsite:
             "🌟 **Your existence touches others** in ways you may never fully know. Your absence would leave a space that no one else could fill.",
             "🌊 **Feelings are like waves** - they rise, they crash, and they recede. This overwhelming moment will pass."
         ]
-        
+
         nature_healing = [
             "🌳 **Nature's Healing Power**: Step outside and feel the sun on your skin. Notice how the world continues its beautiful cycles, reminding us that renewal is always possible.",
             "🌿 **Ground Yourself**: Sit with your back against a tree. Feel its strength and stability. Remember that you too have deep roots of resilience.",
@@ -215,7 +230,7 @@ class MentalWellnessWebsite:
             "🌄 **Watch a Sunrise/Sunset**: Witness how even the darkest night always gives way to light. Your current darkness will too.",
             "💧 **Water's Wisdom**: Watch water flow around obstacles rather than fighting them. Sometimes surrender to the moment is the bravest choice."
         ]
-        
+
         hopeful_activities = [
             "**🌻 Plant Something**: Even a small seed in a pot. Watch life begin anew and remember your own capacity for growth.",
             "**📝 Write a Letter**: To your future self, describing the beautiful moments you still want to experience.",
@@ -223,15 +238,19 @@ class MentalWellnessWebsite:
             "**🤗 Reach Out**: Text someone 'I'm having a hard time' or call a helpline. You don't have to carry this alone.",
             "**🌿 Nature Walk**: Walk slowly, noticing 5 beautiful things in nature you haven't seen before."
         ]
-        
+
         affirmation = random.choice(life_affirmations)
         nature_message = random.choice(nature_healing)
         activity = random.choice(hopeful_activities)
-        
+
+        # ENHANCED CRISIS RESPONSE WITH "YOUR SAFETY IS IMPORTANT" FEATURE
         crisis_response = f"""
-🚨 **I'm deeply concerned about what you're sharing**
+☠️ **YOUR SAFETY IS IMPORTANT - I'm deeply concerned about what you're sharing**
 
 {affirmation}
+
+## 🛡️ **Immediate Safety First**
+**Your life is precious and worth protecting.** Please reach out for help immediately - you don't have to face these thoughts alone.
 
 ## 🌍 **The Healing Power of Nature**
 {nature_message}
@@ -242,22 +261,63 @@ class MentalWellnessWebsite:
 - **Future you exists** and will thank present you for staying
 - **Small moments of beauty await you** - a perfect cup of tea, a child's laughter, a favorite song
 
-## 🆘 **IMMEDIATE HELP - PLEASE REACH OUT NOW:**
+## 🚦 **IMMEDIATE HELP - PLEASE REACH OUT NOW:**
 
 ### 📞 **24/7 Crisis Support:**
-• **988** Suicide & Crisis Lifeline (Call or Text)
-• **741741** Crisis Text Line (Text HOME)
-• **911** Emergency Services
+• **988** Suicide & Crisis Lifeline (Call or Text) - Available 24/7
+• **741741** Crisis Text Line (Text HOME) - Free, confidential
+• **911** Emergency Services - For immediate danger
 
 ### 🌟 **Right Now, Try This:**
 {activity}
 
+## 🛡️ **Your Safety Plan:**
+1. **Remove means** - Distance yourself from anything harmful
+2. **Call for help** - Use the numbers above immediately
+3. **Stay with someone** - Don't be alone right now
+4. **Remember** - This intense feeling will pass
+
 ## 🌈 **Remember:**
-**This intense pain is temporary.** Millions have stood where you are and found their way to healing. Professional help works, and there are people waiting to support you right now.
+**Your safety is the most important thing right now.** Millions have stood where you are and found their way to healing. Professional help works, and there are people waiting to support you right now.
 
 **Your story isn't over. Beautiful chapters are still unwritten.** Please reach out for human support immediately.
 """
         return crisis_response
+
+    def generate_safety_response(self, text: str) -> str:
+        """Generate immediate safety-focused response for kill-related queries"""
+
+        immediate_safety_steps = [
+            "**🛡️ Immediate Safety First**: Please put distance between yourself and any means of harm right now.",
+            "**🏠 Safe Environment**: Go to a room with others or a public space where you're not alone.",
+            "**📱 Contact Help**: Call 988 or text 741741 immediately - they're trained to help exactly with what you're feeling.",
+            "**⏰ Wait 60 Minutes**: Intense urges often pass. Give yourself one hour and reach out for support during that time."
+        ]
+
+        safety_step = random.choice(immediate_safety_steps)
+
+        safety_response = f"""
+☠️ **YOUR SAFETY IS IMPORTANT**
+
+{safety_step}
+
+## 🚦 **IMMEDIATE CRISIS SUPPORT:**
+• **988** Suicide & Crisis Lifeline (Call or Text)
+• **741741** Crisis Text Line (Text HOME)
+• **911** Emergency Services
+
+## 📝 **What to say when you call:**
+"I'm having thoughts of harming myself and need to talk to someone right now."
+
+## 🌟 **You're not alone in this:**
+- **These feelings are temporary** even if they don't feel that way
+- **Professional help works** - counselors are available 24/7
+- **Your brain is lying to you** when it says things would be better without you
+- **People care** and want to help you through this
+
+**Please reach out right now. Your safety matters more than anything else.**
+"""
+        return safety_response
 
     def log_mood(self, emotion: str, text: str):
         """Log mood entry"""
@@ -285,23 +345,23 @@ class MentalWellnessWebsite:
         """Get mood statistics for dashboard"""
         if not self.mood_history:
             return None, None
-        
+
         df = pd.DataFrame(self.mood_history)
-        
+
         # Create a numeric value for emotions for the chart
         emotion_map = {emotion: i for i, emotion in enumerate(self.emotion_data.keys())}
         df['emotion_value'] = df['emotion'].map(emotion_map).fillna(len(emotion_map))
-        
+
         # Weekly mood chart
-        fig_mood = px.line(df, x='timestamp', y='emotion_value', 
+        fig_mood = px.line(df, x='timestamp', y='emotion_value',
                           title='Your Mood Journey',
                           labels={'timestamp': 'Time', 'emotion_value': 'Mood Level'})
-        
+
         # Emotion distribution
         emotion_counts = df['emotion'].value_counts()
         fig_dist = px.pie(values=emotion_counts.values, names=emotion_counts.index,
                          title='Emotion Distribution')
-        
+
         return fig_mood, fig_dist
 
 # Initialize the wellness system
@@ -309,7 +369,7 @@ wellness_system = MentalWellnessWebsite()
 
 def create_app():
     """Create the Gradio application"""
-    
+
     with gr.Blocks(
         theme=gr.themes.Soft(
             primary_hue="blue",
@@ -320,23 +380,55 @@ def create_app():
         .emotion-emoji { font-size: 4em !important; text-align: center !important; }
         .gradio-container { max-width: 1200px !important; margin: 0 auto !important; }
         .activity-btn { margin: 5px !important; }
-        .crisis-response { background-color: #fff3cd; padding: 20px; border-radius: 10px; border-left: 5px solid #ff6b6b; }
+        .crisis-response {
+            background-color: #fff3cd;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #ff6b6b;
+            border-top: 3px solid #ff6b6b;
+            border-right: 3px solid #ff6b6b;
+            border-bottom: 3px solid #ff6b6b;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { border-left-color: #ff6b6b; }
+            50% { border-left-color: #ff8e8e; }
+            100% { border-left-color: #ff6b6b;
+        }
+        .safety-alert {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 15px;
+            border: 3px solid #ff4757;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+        }
         """
     ) as demo:
-        
+
         gr.Markdown("""
         # 🌈 MindWell - Your Mental Wellness Companion
-        
+
         *Your safe space for emotional support, crisis help, and healing through nature*
         """)
-        
+
+        # ADDED SAFETY DISCLAIMER AT TOP
+        gr.Markdown("""
+        <div style='background: #d4edda; color: #155724; padding: 15px; border-radius: 10px;
+                    border: 2px solid #c3e6cb; margin: 10px 0; text-align: center;'>
+            <strong>🛡️ Your Safety is Important:</strong> If you're having thoughts of harm, crisis resources are provided immediately. Your life matters.
+        </div>
+        """)
+
         with gr.Tabs() as tabs:
             with gr.TabItem("💬 Emotional Support"):
                 gr.Markdown("""
                 # 💬 How are you feeling today?
                 *Share what's on your mind - I'm here to listen and support you*
                 """)
-                
+
                 with gr.Row():
                     with gr.Column(scale=2):
                         emotion_input = gr.Textbox(
@@ -345,58 +437,58 @@ def create_app():
                             lines=3,
                             max_lines=5
                         )
-                        
+
                         analyze_btn = gr.Button("Get Support 🌟", size="lg", variant="primary")
-                        
+
                     with gr.Column(scale=1):
                         gr.Markdown("""
                         ### 💡 Examples to try:
                         - "I'm overwhelmed with work deadlines"
-                        - "Feeling sad and lonely today"  
+                        - "Feeling sad and lonely today"
                         - "So happy about good news!"
                         - "Stressed about family issues"
                         - "I'm having dark thoughts"
                         """)
-                
+
                 # Results section
                 with gr.Row(visible=False) as results_row:
                     with gr.Column():
                         emotion_display = gr.Markdown(label="Emotion Analysis")
-                        
+
                         with gr.Row():
                             with gr.Column():
                                 motivational_section = gr.Markdown(label="Motivational Message")
                             with gr.Column():
                                 emotion_emoji = gr.Markdown(label="Emotion", elem_classes="emotion-emoji")
-                        
+
                         activities_section = gr.Markdown(label="Recommended Activities")
-                        
+
                         with gr.Row() as activities_row:
                             activity_components = []
                             for i in range(3):
                                 with gr.Column():
                                     activity_btn = gr.Button(f"Activity {i+1}", visible=False, size="sm", elem_classes="activity-btn")
                                     activity_components.append(activity_btn)
-                
-                # Crisis section
+
+                # Crisis section - ENHANCED WITH SAFETY FOCUS
                 with gr.Row(visible=False) as crisis_row:
                     with gr.Column():
-                        crisis_display = gr.Markdown(label="Crisis Support", elem_classes="crisis-response")
-            
+                        crisis_display = gr.Markdown(label="🛡️ Your Safety is Important", elem_classes="safety-alert")
+
             with gr.TabItem("📊 Wellness Dashboard"):
                 gr.Markdown("# 📊 Your Wellness Dashboard")
-                
+
                 with gr.Row():
                     with gr.Column():
                         stats_display = gr.Markdown()
                         refresh_btn = gr.Button("🔄 Refresh Dashboard", variant="primary")
-                    
+
                 with gr.Row():
                     with gr.Column():
                         mood_chart = gr.Plot(label="Mood Journey")
                     with gr.Column():
                         dist_chart = gr.Plot(label="Emotion Patterns")
-                
+
                 with gr.Row():
                     with gr.Column():
                         gr.Markdown("### 📝 Recent Mood Entries")
@@ -406,7 +498,7 @@ def create_app():
                             interactive=False,
                             wrap=True
                         )
-                    
+
                     with gr.Column():
                         gr.Markdown("### ✅ Completed Activities")
                         activity_table = gr.Dataframe(
@@ -415,15 +507,15 @@ def create_app():
                             interactive=False,
                             wrap=True
                         )
-            
+
             with gr.TabItem("🌿 Nature Healing"):
                 gr.Markdown("# 🌿 Healing Through Nature")
-                
+
                 with gr.Row():
                     with gr.Column():
                         gr.Markdown("""
                         ## 🌳 Why Nature Heals
-                        
+
                         **Science shows that spending time in nature:**
                         - Reduces stress and anxiety
                         - Lowers blood pressure
@@ -431,147 +523,152 @@ def create_app():
                         - Boosts immune system function
                         - Increases feelings of connection and purpose
                         """)
-                        
+
                         gr.Markdown("""
-                        ## 🍃 Simple Nature Practices
-                        
+                        ## 🌾 Simple Nature Practices
+
                         ### 🌅 Morning Grounding
                         Step outside for 5 minutes each morning. Feel the air, listen to birds, notice the light.
-                        
+
                         ### 🌿 Mindful Walking
                         Walk slowly without destination. Notice textures, colors, smells around you.
-                        
-                        ### 🌸 Seasonal Awareness
+
+                        ### 🌼 Seasonal Awareness
                         Track nature's changes - budding leaves, falling snow, migrating birds.
-                        
+
                         ### 💧 Water Connection
                         Visit water - ocean, river, or even a fountain. Water has calming properties.
                         """)
-                    
+
                     with gr.Column():
                         gr.Markdown("""
                         ## 🌻 Life-Affirming Activities
-                        
+
                         ### Plant & Grow
                         - Start a small herb garden
                         - Grow flowers from seeds
                         - Care for a houseplant
-                        
+
                         ### Nature Journal
                         - Sketch leaves or clouds
                         - Write about seasonal changes
                         - Record bird sightings
-                        
+
                         ### Outdoor Mindfulness
                         - Cloud watching
                         - Star gazing
                         - Listening to rain
-                        
+
                         ### Community Nature
                         - Join a gardening group
                         - Volunteer for park cleanup
                         - Birdwatching with friends
                         """)
-                        
+
+                        # ADDED SAFETY MESSAGE IN NATURE TAB
                         gr.Markdown("""
-                        ## 🌈 Your Life Matters
-                        
-                        **Remember:**
-                        - You are part of nature's beautiful tapestry
-                        - Each season teaches us about cycles and renewal
-                        - Your unique perspective enriches the world
-                        - Future generations need your light
+                        <div style='background: #fff3cd; padding: 15px; border-radius: 10px; border-left: 4px solid #ffc107;'>
+                        ## 🛡️ Your Safety in Nature
+
+                        **If you're having thoughts of harm:**
+                        - Go outside and feel the sun on your skin
+                        - Notice how nature continues its cycles of life
+                        - Remember that you are part of this beautiful system
+                        - Reach out for help - your life is precious
+                        </div>
                         """)
-        
-        # Event handlers for Emotional Support tab
+
+        # Event handlers
         def process_emotion(text):
             if not text.strip():
                 return [
                     gr.update(visible=False),  # results_row
                     gr.update(visible=False),  # crisis_row
-                    "", "", "", "", 
+                    "", "", "", "",
                     *[gr.update(visible=False) for _ in range(3)]
                 ]
-            
+
             analysis = wellness_system.analyze_emotion(text)
             emotion = analysis['emotion']
-            
+
+            # CRISIS DETECTION
             if emotion == "crisis":
                 crisis_content = wellness_system.generate_crisis_response()
                 return [
-                    gr.update(visible=False),
-                    gr.update(visible=True),
-                    "", "", "", crisis_content,
-                    *[gr.update(visible=False) for _ in range(3)]
+                    gr.update(visible=False), # Hide normal results_row
+                    gr.update(visible=True),  # Show crisis_row
+                    crisis_content,           # Update crisis_display
+                    "", "", "",             # Clear other outputs
+                    *[gr.update(visible=False) for _ in range(3)] # Hide activity buttons
                 ]
-            
-            # Regular emotion processing
+
+            # Normal emotion processing
             emotion_data = wellness_system.emotion_data.get(emotion, wellness_system.emotion_data["anxious"])
             wellness_system.log_mood(emotion, text)
-            
+
             emotion_display_content = f"""
             ## {emotion_data['emoji']} You're feeling {emotion_data['name']}
             *{emotion_data['description']}*
             """
-            
+
             motivational_message = wellness_system.get_motivational_message(emotion)
             motivational_content = f"""
             ### 💫 Encouragement:
             {motivational_message}
             """
-            
+
             emoji_content = f"# {emotion_data['emoji']}"
-            
+
             activities = wellness_system.get_activities(emotion, 3)
             activities_content = "### 🛠️ Helpful Activities:"
-            
+
             activity_updates = []
             for i, activity in enumerate(activities):
                 activity_btn_text = f"{activity['emoji']} {activity['name']} ({activity['duration']})"
                 activity_updates.append(gr.update(
-                    visible=True, 
+                    visible=True,
                     value=activity_btn_text,
                     interactive=True
                 ))
                 activities_content += f"\n{i+1}. **{activity['name']}** ({activity['duration']}) - {activity['description']}"
-            
+
             # Fill remaining slots if less than 3 activities
             while len(activity_updates) < 3:
                 activity_updates.append(gr.update(visible=False))
-            
+
             return [
-                gr.update(visible=True),
-                gr.update(visible=False),
+                gr.update(visible=True),   # Show normal results_row
+                gr.update(visible=False),  # Hide crisis_row
                 emotion_display_content,
                 motivational_content,
                 emoji_content,
                 activities_content,
                 *activity_updates
             ]
-        
+
         def complete_activity(activity_text, emotion):
             """Handle activity completion"""
             activity_name = activity_text.split(')')[0].split(' ')[1] if ')' in activity_text else activity_text
             wellness_system.log_activity(activity_name, emotion)
             return f"✅ Completed: {activity_name}! Great job taking care of yourself. 🌟"
-        
+
         def update_dashboard():
             """Update dashboard with current data"""
             # Mood statistics
             total_moods = len(wellness_system.mood_history)
             total_activities = len(wellness_system.activity_log)
-            
+
             if total_moods > 0:
                 recent_moods = wellness_system.mood_history[-5:][::-1]
                 mood_data = [[m['time'], m['emotion'].title(), m['text']] for m in recent_moods]
-                
+
                 recent_activities = wellness_system.activity_log[-5:][::-1]
                 activity_data = [[a['time'], a['activity'], a['emotion'].title()] for a in recent_activities]
-                
+
                 fig_mood, fig_dist = wellness_system.get_mood_stats()
-                
+
                 stats_text = f"""
-                ## 📈 Your Wellness Stats
+                ## 📊 Your Wellness Stats
                 - **Total Mood Entries**: {total_moods}
                 - **Activities Completed**: {total_activities}
                 - **Emotions Tracked**: {len(set(m['emotion'] for m in wellness_system.mood_history))}
@@ -581,21 +678,22 @@ def create_app():
                 mood_data = []
                 activity_data = []
                 fig_mood, fig_dist = None, None
-                stats_text = "## 📈 Your Wellness Stats\nStart tracking your moods to see your dashboard come to life! 💫"
-            
+                stats_text = "## 📊 Your Wellness Stats\nStart tracking your moods to see your dashboard come to life! 💫"
+
             return stats_text, fig_mood, fig_dist, mood_data, activity_data
-        
-        # Connect event handlers
+
+
+        # Connect event handlers for Emotional Support tab
         analyze_btn.click(
             fn=process_emotion,
             inputs=[emotion_input],
             outputs=[
-                results_row, crisis_row, emotion_display, 
+                results_row, crisis_row, emotion_display,
                 motivational_section, emotion_emoji, activities_section,
                 *activity_components
             ]
         )
-        
+
         # Activity completion handlers
         for i, activity_btn in enumerate(activity_components):
             activity_btn.click(
@@ -603,42 +701,34 @@ def create_app():
                 inputs=[activity_btn, emotion_display],
                 outputs=[activity_btn]
             )
-        
+
+        # Event handlers for Wellness Dashboard tab
         refresh_btn.click(
             fn=update_dashboard,
             outputs=[stats_display, mood_chart, dist_chart, mood_table, activity_table]
         )
-        
+
         # Initial dashboard load
         demo.load(
             fn=update_dashboard,
             outputs=[stats_display, mood_chart, dist_chart, mood_table, activity_table]
         )
-    
+
     return demo
 
-# Function to launch the app in Colab
-def launch_in_colab():
-    """Launch the app with Colab-friendly settings"""
-    print("🚀 Starting Enhanced MindWell Mental Wellness Website...")
+# Function to launch the app
+def launch_app():
+    """Launch the app with standard settings"""
+    print("🚀 Starting MindWell Mental Wellness Website...")
     print("⏳ This may take a few seconds...")
-    print("✅ Enhanced crisis support with nature healing activated")
-    
+    print("✅ Crisis detection activated - 'want to kill myself' will trigger immediate help")
+
     # Create the app
     demo = create_app()
-    
-    # Launch with Colab-friendly settings
-    try:
-        demo.launch(share=True, debug=False, show_error=True)
-    except Exception as e:
-        print(f"⚠️  Public link failed, trying local: {e}")
-        try:
-            demo.launch(server_name="0.0.0.0", server_port=0, debug=False)
-        except Exception as e2:
-            print(f"🔧 Trying alternative approach...")
-            demo.queue()
-            demo.launch(share=True, inbrowser=False, quiet=True)
+
+    # Launch with standard settings
+    demo.launch(server_name="0.0.0.0", server_port=7860, share=False)
 
 # Run the application
 if __name__ == "__main__":
-    launch_in_colab()
+    launch_app()
